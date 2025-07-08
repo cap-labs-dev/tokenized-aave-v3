@@ -24,7 +24,7 @@ contract TestFactory is Setup {
         }
 
         vm.prank(management);
-        address newStrategy = factory.newAaveV3Lender(_asset);
+        address newStrategy = factory.newAaveV3Lender(_asset, vault);
 
         IStrategyInterface strategy = IStrategyInterface(newStrategy);
 
@@ -67,7 +67,7 @@ contract TestFactory is Setup {
         }
 
         vm.prank(management);
-        address newStrategy = factory.newAaveV3Lender(_asset);
+        address newStrategy = factory.newAaveV3Lender(_asset, vault);
 
         IStrategyInterface strategy = IStrategyInterface(newStrategy);
 
@@ -128,7 +128,7 @@ contract TestFactory is Setup {
         }
 
         vm.prank(management);
-        address newStrategy = factory.newAaveV3Lender(_asset);
+        address newStrategy = factory.newAaveV3Lender(_asset, vault);
 
         IStrategyInterface strategy = IStrategyInterface(newStrategy);
 
@@ -225,7 +225,7 @@ contract TestFactory is Setup {
         }
 
         vm.prank(management);
-        address newStrategy = factory.newAaveV3Lender(_asset);
+        address newStrategy = factory.newAaveV3Lender(_asset, vault);
 
         IStrategyInterface strategy = IStrategyInterface(newStrategy);
 
@@ -277,7 +277,7 @@ contract TestFactory is Setup {
         }
 
         vm.prank(management);
-        address newStrategy = factory.newAaveV3Lender(_asset);
+        address newStrategy = factory.newAaveV3Lender(_asset, vault);
 
         IStrategyInterface strategy = IStrategyInterface(newStrategy);
 

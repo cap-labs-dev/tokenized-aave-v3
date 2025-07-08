@@ -51,12 +51,16 @@ contract AaveV3Lender is BaseStrategy, UniswapV3Swapper, AuctionSwapper {
     // to allow for reports to still work properly.
     mapping(address => uint256) public minAmountToSellMapping;
 
+    // The vault that can deposit and withdraw.
+    address public vault;
+
     constructor(
         address _asset,
         string memory _name,
         address _lendingPool,
         address _router,
-        address _base
+        address _base,
+        address _vault
     ) BaseStrategy(_asset, _name) {
         lendingPool = IPool(_lendingPool);
 
@@ -87,6 +91,7 @@ contract AaveV3Lender is BaseStrategy, UniswapV3Swapper, AuctionSwapper {
         minAmountToSell = 0;
         router = _router;
         base = _base;
+        vault = _vault;
     }
 
     /**
@@ -309,8 +314,11 @@ contract AaveV3Lender is BaseStrategy, UniswapV3Swapper, AuctionSwapper {
      * @return . The available amount the `_owner` can deposit in terms of `asset`
      */
     function availableDepositLimit(
-        address /*_owner*/
+        address _owner
     ) public view override returns (uint256) {
+        // Only allow the cap vault to deposit.
+        if (_owner != vault) return 0;
+
         // Get the data configuration bitmap.
         uint256 _data = lendingPool.getConfiguration(address(asset)).data;
 
@@ -401,8 +409,11 @@ contract AaveV3Lender is BaseStrategy, UniswapV3Swapper, AuctionSwapper {
      * @return . The available amount that can be withdrawn in terms of `asset`
      */
     function availableWithdrawLimit(
-        address /*_owner*/
+        address _owner
     ) public view override returns (uint256) {
+        // Only allow the cap vault to withdraw.
+        if (_owner != vault) return 0;
+
         uint256 liquidity;
 
         // IF pool is not paused

@@ -33,6 +33,8 @@ contract Setup is ExtendedTest {
         0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2;
     address public constant ROUTER = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
     address public constant WHALE = 0xBA12222222228d8Ba445958a75a0704d566BF2C8;
+    address public constant REGISTRY =
+        0xfcD78c11720d3eF09a567E51D87d338f98fA2a89;
 
     address public daddy;
     address public user;
@@ -40,6 +42,7 @@ contract Setup is ExtendedTest {
     address public management;
     address public keeper;
     address public buyer;
+    address public vault;
 
     uint256 public minFuzzAmount;
     uint256 public maxFuzzAmount;
@@ -53,6 +56,7 @@ contract Setup is ExtendedTest {
         management = makeAddr("management");
         keeper = makeAddr("keeper");
         buyer = makeAddr("buyer");
+        vault = makeAddr("vault");
 
         asset = USDC;
 
@@ -69,11 +73,12 @@ contract Setup is ExtendedTest {
             daddy,
             LENDING_POOL,
             ROUTER,
-            address(WETH)
+            address(WETH),
+            REGISTRY
         );
 
         // Deploy strategy
-        strategy = IStrategyInterface(factory.newAaveV3Lender(address(asset)));
+        strategy = IStrategyInterface(factory.newAaveV3Lender(address(asset), vault));
         vm.prank(management);
         strategy.acceptManagement();
         vm.prank(management);
@@ -88,7 +93,7 @@ contract Setup is ExtendedTest {
         uint256 _performanceFee
     ) public returns (IStrategyInterface) {
         IStrategyInterface newStrategy = IStrategyInterface(
-            factory.newAaveV3Lender(_asset)
+            factory.newAaveV3Lender(_asset, vault)
         );
         vm.prank(management);
         newStrategy.acceptManagement();

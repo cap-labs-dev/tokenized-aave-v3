@@ -3,10 +3,15 @@ pragma solidity 0.8.18;
 
 import {AaveV3Lender, ERC20} from "./AaveV3Lender.sol";
 import {IStrategyInterface} from "./interfaces/IStrategyInterface.sol";
+import {IVaultInterface} from "./interfaces/IVaultInterface.sol";
+import {IRegistry} from "./interfaces/IRegistry.sol";
 
 contract AaveV3LenderFactory {
     /// @notice Revert message for when a strategy has already been deployed.
     error AlreadyDeployed(address _strategy);
+
+    /// @notice Revert message for when the asset is not the same as the vault asset.
+    error InvalidVault(address _asset, address _vault);
 
     event NewAaveV3Lender(address indexed strategy, address indexed asset);
 
@@ -15,6 +20,7 @@ contract AaveV3LenderFactory {
     address public immutable lendingPool;
     address public immutable router;
     address public immutable base;
+    address public immutable registry;
 
     address public management;
     address public performanceFeeRecipient;
@@ -30,7 +36,8 @@ contract AaveV3LenderFactory {
         address _sms,
         address _lendingPool,
         address _router,
-        address _base
+        address _base,
+        address _registry
     ) {
         management = _management;
         performanceFeeRecipient = _performanceFeeRecipient;
@@ -39,16 +46,23 @@ contract AaveV3LenderFactory {
         lendingPool = _lendingPool;
         router = _router;
         base = _base;
+        registry = _registry;
     }
 
     /**
      * @notice Deploy a new Aave V3 Lender.
      * @param _asset The underlying asset for the lender to use.
+     * @param _vault The vault that can deposit and withdraw.
      * @return . The address of the new lender.
      */
-    function newAaveV3Lender(address _asset) external returns (address) {
+    function newAaveV3Lender(address _asset, address _vault) external returns (address) {
         if (deployments[_asset] != address(0))
             revert AlreadyDeployed(deployments[_asset]);
+
+        if (
+            !IRegistry(registry).isEndorsed(_vault) ||
+            _asset != IVaultInterface(_vault).asset()
+        ) revert InvalidVault(_asset, _vault);
 
         string memory _name = string(
             abi.encodePacked("Aave V3 ", ERC20(_asset).symbol(), " Lender")
@@ -57,7 +71,7 @@ contract AaveV3LenderFactory {
         // We need to use the custom interface with the
         // tokenized strategies available setters.
         IStrategyInterface newStrategy = IStrategyInterface(
-            address(new AaveV3Lender(_asset, _name, lendingPool, router, base))
+            address(new AaveV3Lender(_asset, _name, lendingPool, router, base, _vault))
         );
 
         newStrategy.setPerformanceFeeRecipient(performanceFeeRecipient);
@@ -68,9 +82,9 @@ contract AaveV3LenderFactory {
 
         newStrategy.setEmergencyAdmin(sms);
 
-        newStrategy.setPerformanceFee(500);
+        newStrategy.setPerformanceFee(0);
 
-        newStrategy.setProfitMaxUnlockTime(60 * 60 * 24 * 3);
+        newStrategy.setProfitMaxUnlockTime(0);
 
         emit NewAaveV3Lender(address(newStrategy), _asset);
 
