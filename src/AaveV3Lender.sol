@@ -11,6 +11,7 @@ import {IStakedAave} from "./interfaces/Aave/V3/IStakedAave.sol";
 import {IPool} from "./interfaces/Aave/V3/IPool.sol";
 import {IRewardsController} from "./interfaces/Aave/V3/IRewardsController.sol";
 import {IProtocolDataProvider} from "./interfaces/Aave/V3/IProtocolDataProvider.sol";
+import {IMerklClaimer} from "./interfaces/merkl/IMerklClaimer.sol";
 
 // Swappers
 import {UniswapV3Swapper} from "@periphery/swappers/UniswapV3Swapper.sol";
@@ -39,6 +40,9 @@ contract AaveV3Lender is BaseStrategy, UniswapV3Swapper, AuctionSwapper {
     // The token that we get in return for deposits.
     IAToken public immutable aToken;
 
+    // The claimer for claiming rewards.
+    IMerklClaimer public immutable claimer;
+
     // Bool to decide to try and claim rewards. Defaults to False.
     bool public claimRewards;
 
@@ -60,7 +64,8 @@ contract AaveV3Lender is BaseStrategy, UniswapV3Swapper, AuctionSwapper {
         address _lendingPool,
         address _router,
         address _base,
-        address _vault
+        address _vault,
+        address _claimer
     ) BaseStrategy(_asset, _name) {
         lendingPool = IPool(_lendingPool);
 
@@ -92,6 +97,7 @@ contract AaveV3Lender is BaseStrategy, UniswapV3Swapper, AuctionSwapper {
         router = _router;
         base = _base;
         vault = _vault;
+        claimer = IMerklClaimer(_claimer);
     }
 
     /**
@@ -500,5 +506,23 @@ contract AaveV3Lender is BaseStrategy, UniswapV3Swapper, AuctionSwapper {
      */
     function _emergencyWithdraw(uint256 _amount) internal override {
         _freeFunds(_amount);
+    }
+
+    /// @notice Claim rewards from the underlying platform
+    /// @param _tokens The tokens to claim
+    /// @param _amounts The amounts to claim
+    /// @param _proofs The proofs to claim
+    function claim(
+        address[] calldata _tokens,
+        uint256[] calldata _amounts,
+        bytes32[][] calldata _proofs
+    ) external {
+        address[] memory users = new address[](_tokens.length);
+
+        for (uint256 i = 0; i < _tokens.length; i++) {
+            users[i] = address(this);
+        }
+
+        claimer.claim(users, _tokens, _amounts, _proofs);
     }
 }

@@ -21,6 +21,7 @@ contract AaveV3LenderFactory {
     address public immutable router;
     address public immutable base;
     address public immutable registry;
+    address public immutable claimer;
 
     address public management;
     address public performanceFeeRecipient;
@@ -37,7 +38,8 @@ contract AaveV3LenderFactory {
         address _lendingPool,
         address _router,
         address _base,
-        address _registry
+        address _registry,
+        address _claimer
     ) {
         management = _management;
         performanceFeeRecipient = _performanceFeeRecipient;
@@ -47,6 +49,7 @@ contract AaveV3LenderFactory {
         router = _router;
         base = _base;
         registry = _registry;
+        claimer = _claimer;
     }
 
     /**
@@ -56,6 +59,8 @@ contract AaveV3LenderFactory {
      * @return . The address of the new lender.
      */
     function newAaveV3Lender(address _asset, address _vault) external returns (address) {
+        require(msg.sender == management, "!management");
+
         if (deployments[_asset] != address(0))
             revert AlreadyDeployed(deployments[_asset]);
 
@@ -71,7 +76,7 @@ contract AaveV3LenderFactory {
         // We need to use the custom interface with the
         // tokenized strategies available setters.
         IStrategyInterface newStrategy = IStrategyInterface(
-            address(new AaveV3Lender(_asset, _name, lendingPool, router, base, _vault))
+            address(new AaveV3Lender(_asset, _name, lendingPool, router, base, _vault, claimer))
         );
 
         newStrategy.setPerformanceFeeRecipient(performanceFeeRecipient);

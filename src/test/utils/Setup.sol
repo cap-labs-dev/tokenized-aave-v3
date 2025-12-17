@@ -35,6 +35,8 @@ contract Setup is ExtendedTest {
     address public constant WHALE = 0xBA12222222228d8Ba445958a75a0704d566BF2C8;
     address public constant REGISTRY =
         0xfcD78c11720d3eF09a567E51D87d338f98fA2a89;
+    address public constant CLAIMER =
+        0x3Ef3D8bA38EBe18DB133cEc108f4D14CE00Dd9Ae;
 
     address public daddy;
     address public user;
@@ -74,7 +76,8 @@ contract Setup is ExtendedTest {
             LENDING_POOL,
             ROUTER,
             address(WETH),
-            REGISTRY
+            REGISTRY,
+            CLAIMER
         );
 
         // Deploy strategy
